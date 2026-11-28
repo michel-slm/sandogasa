@@ -120,6 +120,37 @@ ship" and keeps it in `$XDG_STATE_HOME/fedora-cve-triage/to-check.json`
 until a run judges it some other way, for a person to check the source
 first. Reading that source is the rest of #271. Refs #271.
 
+### fedora-cve-triage says whether the code a CVE's fix changed is in an older series
+
+A bug listed under "May not reach the older series these releases ship"
+still had to be checked by hand: whether ImageMagick 6.9.13 has the
+code a fix made in ImageMagick 7 changed is a question its version
+cannot answer. `older_series` can now say which repository each major
+series is built from:
+
+```toml
+[check."bodhi-check".older_series.ImageMagick]
+6 = "https://github.com/ImageMagick/ImageMagick6"
+7 = "https://github.com/ImageMagick/ImageMagick"
+```
+
+With that (the shipped `/etc/fedora-cve-triage/run.toml` has it), each
+release left gets a line saying what the shipped source shows: "not
+affected: 6.9.13-60 has no coders/ashlar.c", "the code is there", the
+tag already containing the fix, or "unsure" with what is missing. The
+fix commits come from the CVE's references, or, when they link none,
+from the commits naming its GitHub advisory in the fix's repository.
+The source files they changed (not a ChangeLog entry) are looked for
+in the tag for the shipped version (`6.9.13.60` as `6.9.13-60`). A file of the same name
+elsewhere in the tree (`magick/resize.c` for `MagickCore/resize.c`)
+leaves it unsure, since the code may have moved.
+
+The source is read from local checkouts, asked for once per repository
+at a terminal and kept in `~/.config/fedora-cve-triage/checkouts.toml`;
+nothing is fetched. Nothing is written to the bug either way. The plain
+list form of `older_series` still works, without the source check.
+Refs #271.
+
 ### fedora-cve-triage reads a fix per series from the CVE's own record
 
 bodhi-check told the assignee of bug 2568087 (ImageMagick,
